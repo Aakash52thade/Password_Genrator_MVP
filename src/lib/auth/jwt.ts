@@ -1,31 +1,35 @@
 
 import jwt from 'jsonwebtoken';
 import { JWTPayload } from '@/types/auth.types';
-import { Rethink_Sans } from 'next/font/google';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
+// Read env lazily at runtime to avoid build-time crashes on Vercel
+function getJwtSecret(): string {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error('JWT_SECRET is not set. Define it in Vercel project env vars.');
+    }
+    return secret;
+}
 
-
-if (!JWT_SECRET) {
-    throw new Error('Please define JWT_SECRET in .env.local');
+function getJwtExpiresIn(): string | number {
+    return process.env.JWT_EXPIRES_IN || '7d';
 }
 
 /**
   Generate JWT token
  */
 
-export function generateToken(payload: {userId: string, email: string}): string {
-    const token = jwt.sign(payload, JWT_SECRET, {
-        expiresIn: JWT_EXPIRES_IN
-    })
+export function generateToken(payload: { userId: string; email: string }): string {
+    const token = jwt.sign(payload, getJwtSecret(), {
+        expiresIn: getJwtExpiresIn(),
+    });
     return token;
 }
 
 //  Verify JWT token
 export function verifyToken(token: string): JWTPayload | null {
     try {
-        const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+        const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload;
         return decoded;
     } catch (error) {
         console.error('JWT verification failed:', error);
