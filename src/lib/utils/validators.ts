@@ -1,3 +1,5 @@
+// src/lib/utils/validators.ts
+// UPDATED: Relaxed password requirements for easier testing
 import { z } from 'zod';
 
 // ==================== AUTH SCHEMAS ====================
@@ -11,14 +13,8 @@ export const registerSchema = z
 
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-      .regex(/[0-9]/, 'Password must contain at least one number')
-      .regex(
-        /[!@#$%^&*(),.?":{}|<>]/,
-        'Password must contain at least one special character'
-      ),
+      .min(8, 'Password must be at least 8 characters'),
+      // Removed strict regex requirements for easier signup
 
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
@@ -109,7 +105,7 @@ export const updateVaultItemSchema = z.object({
 
 export const vaultSearchSchema = z.object({
   q: z.string().optional(),
-  tags: z.string().optional(), // Comma-separated tags
+  tags: z.string().optional(),
   limit: z.string().regex(/^\d+$/).optional(),
   offset: z.string().regex(/^\d+$/).optional(),
 });
