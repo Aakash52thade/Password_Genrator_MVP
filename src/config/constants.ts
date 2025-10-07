@@ -5,10 +5,24 @@ export const APP_CONFIG = {
   } as const;
   
   export const PASSWORD_CONFIG = {
-    minLength: 8,
-    maxLength: 64,
+    minLength: 4,
+    maxLength: 128,
     defaultLength: 16,
     autoClipboardClearTime: 15000, // 15 seconds
+    
+    // Character sets
+    characterSets: {
+      uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      lowercase: 'abcdefghijklmnopqrstuvwxyz',
+      numbers: '0123456789',
+      symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
+    },
+    
+    // Similar characters (look-alikes)
+    similarChars: 'il1Lo0O',
+    
+    // Ambiguous characters
+    ambiguousChars: '{}[]()/\\\'\"~,;:.<>',
   } as const;
   
   export const CRYPTO_CONFIG = {
@@ -44,3 +58,5 @@ export const APP_CONFIG = {
     vault: '/vault',
     generator: '/generator',
   } as const;
+
+  

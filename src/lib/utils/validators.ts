@@ -1,43 +1,123 @@
-import {email, z} from 'zod';
+import { z } from 'zod';
 
-//Define schema fro user registration data;
-export const registerSchema = z.object({
+// ==================== AUTH SCHEMAS ====================
 
+export const registerSchema = z
+  .object({
     email: z
-    .string()
-    .email('Invalid email address')          // must look like an email
-    .min(1, 'Email is required'), 
-    
+      .string()
+      .email('Invalid email address')
+      .min(1, 'Email is required'),
+
     password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')  // at least 8 characters long
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter') // at least 1 uppercase
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter') // at least 1 lowercase
-    .regex(/[0-9]/, 'Password must contain at least one number')           // at least 1 digit
-    .regex(
-      /[!@#$%^&*(),.?":{}|<>]/,                // at least 1 special character
-      'Password must contain at least one special character'
-    ),
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number')
+      .regex(
+        /[!@#$%^&*(),.?":{}|<>]/,
+        'Password must contain at least one special character'
+      ),
 
-    confirmPassword : z.string().min(1, "Please confirm your password"),
-})
-
-//add validation check if password === confirmpassword
-//in zod refine use for add extra custom validation
-.refine((data) => data.password === data.confirmPassword, {
-    message: "Password don't match,",
-    path: ['confirmPassword']
-})
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 export const loginSchema = z.object({
-    email: z
-    .string()
-    .email('Invalid email address')
-    .min(1, "Email is required"),
-
-    password: z.string().min(1, 'Password is required'),
+  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+  password: z.string().min(1, 'Password is required'),
 });
 
-export type  RegisterInput = z.infer<typeof registerSchema>;
+// ==================== VAULT SCHEMAS ====================
 
-export type LoginIput  = z.infer<typeof loginSchema>
+export const createVaultItemSchema = z.object({
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(100, 'Title cannot exceed 100 characters')
+    .trim(),
+
+  username: z
+    .string()
+    .min(1, 'Username is required')
+    .max(100, 'Username cannot exceed 100 characters')
+    .trim(),
+
+  encryptedPassword: z
+    .string()
+    .min(1, 'Password is required'),
+
+  url: z
+    .string()
+    .url('Invalid URL format')
+    .max(500, 'URL cannot exceed 500 characters')
+    .optional()
+    .or(z.literal('')),
+
+  encryptedNotes: z
+    .string()
+    .max(2000, 'Notes cannot exceed 2000 characters')
+    .optional(),
+
+  tags: z
+    .array(z.string().max(30, 'Tag cannot exceed 30 characters'))
+    .max(10, 'Cannot have more than 10 tags')
+    .optional(),
+});
+
+export const updateVaultItemSchema = z.object({
+  title: z
+    .string()
+    .min(1, 'Title cannot be empty')
+    .max(100, 'Title cannot exceed 100 characters')
+    .trim()
+    .optional(),
+
+  username: z
+    .string()
+    .min(1, 'Username cannot be empty')
+    .max(100, 'Username cannot exceed 100 characters')
+    .trim()
+    .optional(),
+
+  encryptedPassword: z
+    .string()
+    .min(1, 'Password cannot be empty')
+    .optional(),
+
+  url: z
+    .string()
+    .url('Invalid URL format')
+    .max(500, 'URL cannot exceed 500 characters')
+    .optional()
+    .or(z.literal('')),
+
+  encryptedNotes: z
+    .string()
+    .max(2000, 'Notes cannot exceed 2000 characters')
+    .optional(),
+
+  tags: z
+    .array(z.string().max(30, 'Tag cannot exceed 30 characters'))
+    .max(10, 'Cannot have more than 10 tags')
+    .optional(),
+});
+
+export const vaultSearchSchema = z.object({
+  q: z.string().optional(),
+  tags: z.string().optional(), // Comma-separated tags
+  limit: z.string().regex(/^\d+$/).optional(),
+  offset: z.string().regex(/^\d+$/).optional(),
+});
+
+// ==================== TYPE EXPORTS ====================
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type CreateVaultItemInput = z.infer<typeof createVaultItemSchema>;
+export type UpdateVaultItemInput = z.infer<typeof updateVaultItemSchema>;
+export type VaultSearchInput = z.infer<typeof vaultSearchSchema>;
