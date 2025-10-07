@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+// src/lib/db/models/User.ts
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUser extends Document {
   email: string;
@@ -23,7 +24,7 @@ const UserSchema = new Schema<IUser>(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [8, 'Password must be at least 8 characters long'],
+      minlength: [8, 'Password must be at least 8 characters'],
     },
   },
   {
@@ -32,7 +33,6 @@ const UserSchema = new Schema<IUser>(
 );
 
 // Prevent model recompilation in development
-const User: Model<IUser> =
-  mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
 export default User;

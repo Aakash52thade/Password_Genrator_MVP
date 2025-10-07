@@ -1,20 +1,25 @@
-// src/app/api/auth/register/route.ts
+// src/app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/db/models/User';
-import { hashPassword } from '@/lib/auth/password';
+import { verifyPassword } from '@/lib/auth/password';
 import { generateToken } from '@/lib/auth/jwt';
-import { registerSchema } from '@/lib/utils/validators';
-import { AUTH_CONFIG } from '@/config/constants';
+import { loginSchema } from '@/lib/utils/validators';
+
+// Constants for auth cookie
+const AUTH_CONFIG = {
+  cookieName: 'auth_token',
+  cookieMaxAge: 60 * 60 * 24 * 7, // 7 days
+};
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    console.log('📝 Registration attempt:', { email: body.email });
+    console.log('🔐 Login attempt:', { email: body.email });
 
     // Validate input
-    const validation = registerSchema.safeParse(body);
+    const validation = loginSchema.safeParse(body);
     if (!validation.success) {
       console.error('❌ Validation failed:', validation.error.flatten());
       return NextResponse.json(
@@ -34,32 +39,37 @@ export async function POST(request: NextRequest) {
     await connectDB();
     console.log('✅ MongoDB connected');
 
-    // Check if user already exists
-    console.log('🔍 Checking existing user...');
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      console.log('⚠️ User already exists');
+    // Find user by email
+    console.log('🔍 Finding user...');
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      console.log('⚠️ User not found');
       return NextResponse.json(
         {
           success: false,
-          message: 'User with this email already exists',
+          message: 'Invalid email or password',
         },
-        { status: 409 }
+        { status: 401 }
       );
     }
 
-    // Hash password
-    console.log('🔐 Hashing password...');
-    const hashedPassword = await hashPassword(password);
-    console.log('✅ Password hashed');
+    // Verify password
+    console.log('🔐 Verifying password...');
+    const isPasswordValid = await verifyPassword(password, user.password);
+    
+    if (!isPasswordValid) {
+      console.log('⚠️ Invalid password');
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Invalid email or password',
+        },
+        { status: 401 }
+      );
+    }
 
-    // Create user
-    console.log('👤 Creating user...');
-    const user = await User.create({
-      email,
-      password: hashedPassword,
-    });
-    console.log('✅ User created:', user._id);
+    console.log('✅ Password verified');
 
     // Generate JWT token
     const token = generateToken({
@@ -71,14 +81,14 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json(
       {
         success: true,
-        message: 'User registered successfully',
+        message: 'Login successful',
         user: {
           _id: user._id.toString(),
           email: user.email,
           createdAt: user.createdAt,
         },
       },
-      { status: 201 }
+      { status: 200 }
     );
 
     // Set cookie
@@ -92,10 +102,10 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    console.log('✅ Registration successful');
+    console.log('✅ Login successful');
     return response;
   } catch (error: any) {
-    console.error('❌ Registration error:', error);
+    console.error('❌ Login error:', error);
     return NextResponse.json(
       {
         success: false,
